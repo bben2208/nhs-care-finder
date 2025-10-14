@@ -1,0 +1,81 @@
+[
+    {
+        "id": "conquest-ae",
+        "name": "Conquest Hospital — Emergency Department (Demo)",
+        "type": "ae",
+        "location": { "lat": 50.8723, "lon": 0.565 },
+        "address": "The Ridge, Hastings",
+        "phone": "00000 000000",
+        "website": "https://example.nhs.uk/conquest",
+        "opening": { "mon": [{ "open": "00:00", "close": "23:59" }], "tue": [{ "open": "00:00", "close": "23:59" }], "wed": [{ "open": "00:00", "close": "23:59" }], "thu": [{ "open": "00:00", "close": "23:59" }], "fri": [{ "open": "00:00", "close": "23:59" }], "sat": [{ "open": "00:00", "close": "23:59" }], "sun": [{ "open": "00:00", "close": "23:59" }] },
+        "features": { "xray": true, "wheelchair": true, "parking": true }
+    },
+    {
+        "id": "edgh-ae",
+        "name": "Eastbourne DGH — Emergency Department (Demo)",
+        "type": "ae",
+        "location": { "lat": 50.779, "lon": 0.287 },
+        "address": "Kings Dr, Eastbourne",
+        "phone": "00000 000001",
+        "website": "https://example.nhs.uk/edgh",
+        "opening": { "mon": [{ "open": "00:00", "close": "23:59" }], "tue": [{ "open": "00:00", "close": "23:59" }], "wed": [{ "open": "00:00", "close": "23:59" }], "thu": [{ "open": "00:00", "close": "23:59" }], "fri": [{ "open": "00:00", "close": "23:59" }], "sat": [{ "open": "00:00", "close": "23:59" }], "sun": [{ "open": "00:00", "close": "23:59" }] },
+        "features": { "xray": true, "wheelchair": true, "parking": true }
+    },
+    {
+        "id": "brighton-utc",
+        "name": "Brighton Urgent Treatment Centre (Demo)",
+        "type": "utc",
+        "location": { "lat": 50.835, "lon": -0.141 },
+        "address": "Brighton",
+        "phone": "00000 000002",
+        "website": "https://example.nhs.uk/brighton-utc",
+        "opening": {
+            "mon": [{ "open": "08:00", "close": "20:00" }],
+            "tue": [{ "open": "08:00", "close": "20:00" }],
+            "wed": [{ "open": "08:00", "close": "20:00" }],
+            "thu": [{ "open": "08:00", "close": "20:00" }],
+            "fri": [{ "open": "08:00", "close": "20:00" }],
+            "sat": [{ "open": "08:00", "close": "20:00" }],
+            "sun": [{ "open": "08:00", "close": "20:00" }]
+        },
+        "features": { "xray": true, "wheelchair": true, "parking": false }
+    },
+    {
+        "id": "eastbourne-gp-demo",
+        "name": "Eastbourne Family GP (Demo)",
+        "type": "gp",
+        "location": { "lat": 50.773, "lon": 0.285 },
+        "address": "Eastbourne",
+        "phone": "00000 000003",
+        "website": "https://example.nhs.uk/eastbourne-gp",
+        "opening": {
+            "mon": [{ "open": "08:30", "close": "18:00" }],
+            "tue": [{ "open": "08:30", "close": "18:00" }],
+            "wed": [{ "open": "08:30", "close": "18:00" }],
+            "thu": [{ "open": "08:30", "close": "18:00" }],
+            "fri": [{ "open": "08:30", "close": "18:00" }],
+            "sat": [],
+            "sun": []
+        },
+        "features": { "xray": false, "wheelchair": true, "parking": true }
+    },
+    {
+        "id": "st-thomas-ae-demo",
+        "name": "St Thomas’ Hospital — Emergency Department (Demo)",
+        "type": "ae",
+        "location": { "lat": 51.498, "lon": -0.118 },
+        "address": "Westminster Bridge Rd, London",
+        "phone": "00000 000004",
+        "website": "https://example.nhs.uk/st-thomas",
+        "opening": {
+            "mon": [{ "open": "00:00", "close": "23:59" }],
+            "tue": [{ "open": "00:00", "close": "23:59" }],
+            "wed": [{ "open": "00:00", "close": "23:59" }],
+            "thu": [{ "open": "00:00", "close": "23:59" }],
+            "fri": [{ "open": "00:00", "close": "23:59" }],
+            "sat": [{ "open": "00:00", "close": "23:59" }],
+            "sun": [{ "open": "00:00", "close": "23:59" }]
+        },
+        "features": { "xray": true, "wheelchair": true, "parking": false }
+    }
+]
