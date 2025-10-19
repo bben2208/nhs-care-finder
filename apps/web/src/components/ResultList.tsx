@@ -1,50 +1,72 @@
-import ResultCard from "./ResultCard";
-import type { Place } from "../hooks/usePlacesSearch";
-
-type Props = {
-  results: Place[];
-  loading: boolean;
-  error?: string;
-  expandedId: string | null;
-  setExpandedId: (id: string | null | ((prev: string | null) => string | null)) => void;
-  isFav: (id: string) => boolean;
-  toggleFav: (id: string) => void;
-  toDirections: (lat: number, lon: number) => string;
-  border: string; card: string; fg: string; sub: string; dark: boolean;
-};
-
-export default function ResultList({
-  results, loading, error, expandedId, setExpandedId,
-  isFav, toggleFav, toDirections, border, card, fg, sub, dark
-}: Props) {
-  if (error) {
-    return <p role="alert" aria-live="polite" style={{ color: "crimson", marginTop: 8 }}>{error}</p>;
-  }
-
-  if (loading && results.length === 0) {
+type Place = {
+    id: string;
+    name?: string;
+    address?: string;
+    type: string;
+    distanceMeters?: number;
+    status: { open: boolean; closesInMins?: number };
+    location: { lat: number; lon: number };
+    opening?: any;
+    waitMinutes?: number | null;
+  };
+  
+  type Props = {
+    results: Place[];
+    loading: boolean;
+    error?: string;
+    expandedId: string | null;
+    setExpandedId: (id: string | null) => void;
+    isFav: (id: string) => boolean;
+    toggleFav: (id: string) => void;
+    toDirections: (lat: number, lon: number) => string;
+    border: string;
+    card: string;
+    fg: string;
+    sub: string;
+    dark: boolean;
+  };
+  
+  import ResultCard from "./ResultCard";
+  
+  const ResultList = ({
+    results,
+    loading,
+    error,
+    expandedId,
+    setExpandedId,
+    isFav,
+    toggleFav,
+    toDirections,
+    border,
+    card,
+    fg,
+    sub,
+    dark,
+  }: Props) => {
+    if (loading) return <p style={{ marginTop: 12 }}>Loading…</p>;
+    if (error) return <p style={{ marginTop: 12, color: "#b00" }}>{error}</p>;
+    if (!results?.length) return <p style={{ marginTop: 12 }}>No results.</p>;
+  
     return (
-      <ul style={{ listStyle: "none", padding: 0, marginTop: 16, display: "grid", gap: 8 }}>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <li key={i} style={{ height: 84, borderRadius: 12, background: card, border: `1px solid ${border}`, opacity: 0.6 }} />
+      <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: 12, marginTop: 12 }}>
+        {results.map((r) => (
+          <ResultCard
+            key={r.id}
+            place={r}
+            expanded={expandedId === r.id}
+            onToggle={() => setExpandedId(expandedId === r.id ? null : r.id)}
+            isFav={isFav}
+            toggleFav={toggleFav}
+            toDirections={toDirections}
+            border={border}
+            card={card}
+            fg={fg}
+            sub={sub}
+            dark={dark}
+          />
         ))}
       </ul>
     );
-  }
-
-  return (
-    <ul aria-busy={loading} style={{ listStyle: "none", padding: 0, marginTop: 16, display: "grid", gap: 8 }}>
-      {results.map((r) => (
-        <ResultCard
-          key={r.id}
-          place={r}
-          expanded={expandedId === r.id}
-          onToggle={() => setExpandedId(prev => prev === r.id ? null : r.id)}
-          isFav={isFav}
-          toggleFav={toggleFav}
-          toDirections={toDirections}
-          border={border} card={card} fg={fg} sub={sub} dark={dark}
-        />
-      ))}
-    </ul>
-  );
-}
+  };
+  
+  export default ResultList;

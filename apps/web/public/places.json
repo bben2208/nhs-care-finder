@@ -1,0 +1,15 @@
+[
+    {
+      "id": "demo-1",
+      "name": "Example Urgent Treatment Centre",
+      "type": "utc",
+      "distanceMeters": 1200,
+      "status": { "open": true, "closesInMins": 90 },
+      "location": { "lat": 50.7703, "lon": 0.2845 },
+      "opening": { "mon": [{ "open": "08:00", "close": "20:00" }] },
+      "waitMinutes": 15,
+      "address": "1 Health St, BN21",
+      "phone": "01234 567890",
+      "website": "https://example.nhs.uk"
+    }
+  ]

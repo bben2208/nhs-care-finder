@@ -1,44 +1,36 @@
-import "dotenv/config";
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import cors from "cors";
-import helmet from "helmet";
-import placesRouter from "./routes/places.js";
+import placesRouter from "./routes/places";
 
 const app = express();
-app.use(helmet());
-app.use(express.json());
-// --- DEBUG CORS: log origin and allow cross-origin for all requests (including preflight) ---
-app.use((req, _res, next) => {
-  console.log("[REQ]", req.method, req.path, "Origin:", req.headers.origin || "(none)");
-  next();
-});
-app.use(cors({
-  origin: true,            // reflect the request origin
-  credentials: false,      // we don't use cookies
-  methods: ["GET", "HEAD", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Accept"],
-  maxAge: 86400
-}));
-// Handle preflight explicitly (some proxies drop automatic handling)
-app.options("*", cors({
-  origin: true,
-  credentials: false,
-  methods: ["GET", "HEAD", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Accept"],
-  maxAge: 86400
-}));
 
-app.get("/", (_req: Request, res: Response) =>
-  res.json({ ok: true, name: "nhs-care-finder-api" })
+const allowedOrigins = (process.env.WEB_ORIGIN ?? "")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, cb) {
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.includes(origin)) return cb(null, true);
+      console.warn(`[CORS] Blocked origin: ${origin}`);
+      return cb(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
 );
-app.use("/places", placesRouter);
-app.get("/health", (_req: Request, res: Response) => res.json({ ok: true }));
+app.options("*", cors());
 
-// Error handler
-app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  const status = err.status || 500;
-  res.status(status).json({ error: err.message || "Server error", details: err.details });
+app.use(express.json());
+app.get("/health", (_req, res) => res.json({ ok: true }));
+app.use("/", placesRouter);
+app.use((_req, res) => res.status(404).json({ error: "Not found" }));
+
+
+const PORT = Number(process.env.PORT || 5000);
+app.listen(PORT, () => {
+  console.log(`[api] listening on http://localhost:${PORT}`);
+
 });
-
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`API on http://localhost:${PORT}`));

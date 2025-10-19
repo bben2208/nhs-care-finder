@@ -1,49 +1,39 @@
-import express from "express";
+// apps/api/src/routes/places.ts
+import { Router, Request, Response } from "express";
 import axios from "axios";
-import seed from "../data/places.seed.json" with { type: "json" };
+import fs from "fs";
+import path from "path";
+import { haversineMeters } from "../lib/geo";
+import { openingStatus } from "../lib/hours";
 
+type OpeningWindow = { open: string; close: string };
+type Opening = {
+  mon: OpeningWindow[]; tue: OpeningWindow[]; wed: OpeningWindow[];
+  thu: OpeningWindow[]; fri: OpeningWindow[]; sat: OpeningWindow[]; sun: OpeningWindow[];
+};
+
+type Place = {
+  id: string;
+  name: string;
+  type: "gp" | "walk-in" | "utc" | "ae";
+  distanceMeters?: number;
+  status?: { open: boolean; closesInMins?: number };
+  location: { lat: number; lon: number };
+  address?: string;
+  phone?: string;
+  website?: string;
+  opening?: Opening;
+  features?: { xray?: boolean; wheelchair?: boolean; parking?: boolean };
+  waitMinutes?: number;
+};
+
+// --- Geocoding helpers ---
 type LatLon = { lat: number; lon: number };
 
-function haversineMeters(a: LatLon, b: LatLon): number {
-  const R = 6371000;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLon = toRad(b.lon - a.lon);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-  return R * c;
-}
-
-type Window = { open: string; close: string };
-type Opening = {
-  mon: Window[]; tue: Window[]; wed: Window[];
-  thu: Window[]; fri: Window[]; sat: Window[]; sun: Window[];
-};
-const dayKey = (d: number): keyof Opening =>
-  (["sun", "mon", "tue", "wed", "thu", "fri", "sat"][d] as keyof Opening);
-
-function toMin(t: string) { const [h, m] = t.split(":").map(Number); return h * 60 + m; }
-function isOpenNow(opening: Opening, now = new Date()) {
-  const windows = opening[dayKey(now.getDay())];
-  const nowM = now.getHours() * 60 + now.getMinutes();
-  for (const w of windows) {
-    const s = toMin(w.open), e = toMin(w.close);
-    if (s <= nowM && nowM <= e) return { open: true, closesInMins: e - nowM };
-  }
-  return { open: false as const };
-}
-
-/** --- Geocoding helpers --- */
 function normalizePostcode(raw: string): string {
-  // Turn + into space, collapse whitespace, uppercase (keep internal space variant for search)
   return raw.replace(/\+/g, " ").replace(/\s+/g, " ").trim().toUpperCase();
 }
 function extractOutcode(pc: string): string | null {
-  // e.g. "BN21 4YB" -> "BN21"
   const m = normalizePostcode(pc).match(/^([A-Z]{1,2}\d[A-Z\d]?)/);
   return m ? m[1] : null;
 }
@@ -52,7 +42,7 @@ async function geocodePostcode(raw: string): Promise<LatLon> {
   const cleaned = normalizePostcode(raw);
   const nospace = cleaned.replace(/\s/g, "");
 
-  // 1) Exact full postcode (no space)
+  // 1) Exact full postcode
   try {
     const { data } = await axios.get(
       `https://api.postcodes.io/postcodes/${encodeURIComponent(nospace)}`,
@@ -61,7 +51,7 @@ async function geocodePostcode(raw: string): Promise<LatLon> {
     if (data?.result) return { lat: data.result.latitude, lon: data.result.longitude };
   } catch {}
 
-  // 2) Fuzzy search for full postcode (with q)
+  // 2) Fuzzy full postcode
   try {
     const { data } = await axios.get(
       "https://api.postcodes.io/postcodes",
@@ -71,7 +61,7 @@ async function geocodePostcode(raw: string): Promise<LatLon> {
     if (hit) return { lat: hit.latitude, lon: hit.longitude };
   } catch {}
 
-  // 3) OUTCODE centroid (area like "BN21")
+  // 3) OUTCODE centroid
   try {
     const out = extractOutcode(cleaned);
     if (out) {
@@ -84,7 +74,7 @@ async function geocodePostcode(raw: string): Promise<LatLon> {
     }
   } catch {}
 
-  // 4) OSM fallback (broad search)
+  // 4) OSM fallback
   try {
     const { data } = await axios.get(
       "https://nominatim.openstreetmap.org/search",
@@ -101,48 +91,92 @@ async function geocodePostcode(raw: string): Promise<LatLon> {
   throw new Error(`Postcode not found: ${raw}`);
 }
 
-/** --- Router --- */
-const router = express.Router();
+const router = Router();
 
-router.get("/", async (req, res) => {
-  const { postcode, lat, lon, type, radius = "10" } = req.query as Record<string, string>;
+function loadSeed(): Place[] {
+  const file = path.join(__dirname, "..", "data", "places.seed.json");
+  const raw = fs.readFileSync(file, "utf-8");
+  return JSON.parse(raw) as Place[];
+}
+
+router.get("/places", async (req: Request, res: Response) => {
+  const { type, lat, lon, radius = "10", postcode } = req.query as {
+    type?: string; lat?: string; lon?: string; radius?: string; postcode?: string;
+  };
+
   try {
-    let origin: LatLon | null = null;
+    // Load seed (kept as-is from disk)
+    let places = loadSeed();
 
-    if (postcode) {
-      origin = await geocodePostcode(postcode);
-    } else if (lat && lon) {
-      origin = { lat: Number(lat), lon: Number(lon) };
-    } else {
-      return res.status(400).json({ error: "Provide postcode or lat & lon" });
+    // Case-insensitive type filter
+    if (type) {
+      const t = String(type).toLowerCase();
+      places = places.filter((p) => p.type.toLowerCase() === t);
     }
 
-    const rMeters = Number(radius) * 1000;
+    // Determine origin: postcode OR lat/lon
+    let origin: { lat: number; lon: number } | null = null;
 
-    const results = (seed as any[])
-      .filter(p => (type ? p.type === type : true))
-      .map(p => {
-        const distanceMeters = Math.round(haversineMeters(origin!, p.location));
-        const status = isOpenNow(p.opening);
-        return { ...p, distanceMeters, status };
-      })
-      .filter(p => p.distanceMeters <= rMeters)
-      .sort((a, b) => a.distanceMeters - b.distanceMeters);
+    if (postcode) {
+      try {
+        origin = await geocodePostcode(String(postcode));
+      } catch {
+        return res.status(400).json({ error: "Invalid postcode" });
+      }
+    } else if (lat != null && lon != null) {
+      const baseLat = Number(lat);
+      const baseLon = Number(lon);
+      if (Number.isFinite(baseLat) && Number.isFinite(baseLon)) {
+        origin = { lat: baseLat, lon: baseLon };
+      }
+    }
 
-    res.json({ query: { postcode, lat, lon, type, radius, origin }, count: results.length, results });
-  } catch (e: any) {
-    console.error("Search error:", e?.response?.status, e?.response?.data || e?.message);
-    res.status(400).json({ error: e?.message ?? "Bad request" });
+    const radiusKm = Number(radius) || 10;
+    const rMeters = radiusKm * 1000;
+
+    // If we have an origin, compute distances + radius filter + sort.
+    // Otherwise, return places without distances (unchanged behaviour).
+    if (origin) {
+      places = places
+        .map((p) => {
+          const latB = Number((p as any)?.location?.lat);
+          const lonB = Number((p as any)?.location?.lon);
+          const hasCoords =
+            Number.isFinite(latB) && Number.isFinite(lonB) &&
+            Number.isFinite(origin!.lat) && Number.isFinite(origin!.lon);
+
+          return {
+            ...p,
+            distanceMeters: hasCoords ? haversineMeters(origin!, { lat: latB, lon: lonB }) : undefined,
+          };
+        })
+        .filter((p) => (p.distanceMeters ?? Infinity) <= rMeters)
+        .sort((a, b) => (a.distanceMeters ?? Infinity) - (b.distanceMeters ?? Infinity));
+    } else {
+      places = places.map((p) => ({ ...p, distanceMeters: p.distanceMeters }));
+    }
+
+    // Opening status
+    places = places.map((p) => ({
+      ...p,
+      status: openingStatus(p.opening),
+      distanceMeters: typeof p.distanceMeters === "number" ? p.distanceMeters : undefined,
+    }));
+
+    // 🔽 NEW: cap results (default 3, overridable via ?limit)
+    const rawLimit = Number((req.query as any).limit);
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 3;
+    const limited = places.slice(0, limit);
+
+    return res.json({
+      total: places.length,      // total matching before limit
+      count: limited.length,     // number returned
+      results: limited,          // limited list
+    });
+  } catch (err: any) {
+    console.error("[/places] error:", err?.message || err);
+    res.status(500).json({ error: "Server error" });
   }
 });
-
-// ✅ Sibling route (NOT nested)
-router.get("/:id", async (req, res) => {
-  const { id } = req.params;
-  const place = (seed as any[]).find(p => p.id === id);
-  if (!place) return res.status(404).json({ error: "Place not found" });
-  res.json(place);
-});
-
 
 export default router;
