@@ -120,8 +120,7 @@ router.get("/places", async (req: Request, res: Response) => {
     if (postcode) {
       try {
         origin = await geocodePostcode(String(postcode));
-      } catch (e) {
-        // If postcode can't be geocoded, return 400 with a clear error
+      } catch {
         return res.status(400).json({ error: "Invalid postcode" });
       }
     } else if (lat != null && lon != null) {
@@ -164,7 +163,16 @@ router.get("/places", async (req: Request, res: Response) => {
       distanceMeters: typeof p.distanceMeters === "number" ? p.distanceMeters : undefined,
     }));
 
-    res.json({ results: places });
+    // 🔽 NEW: cap results (default 3, overridable via ?limit)
+    const rawLimit = Number((req.query as any).limit);
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 3;
+    const limited = places.slice(0, limit);
+
+    return res.json({
+      total: places.length,      // total matching before limit
+      count: limited.length,     // number returned
+      results: limited,          // limited list
+    });
   } catch (err: any) {
     console.error("[/places] error:", err?.message || err);
     res.status(500).json({ error: "Server error" });
