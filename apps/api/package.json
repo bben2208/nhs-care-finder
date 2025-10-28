@@ -3,17 +3,19 @@
     "version": "1.0.0",
     "type": "module",
     "scripts": {
-      "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-      "build": "tsc -p tsconfig.json",
-      "start": "node dist/index.js"
+        "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+        "build": "tsc -p tsconfig.json",
+        "start": "node dist/index.js"
     },
     "dependencies": {
-      "axios": "^1.7.0",
-      "cors": "^2.8.5",
-      "express": "^4.19.2"
+        "axios": "^1.7.0",
+        "cors": "^2.8.5",
+        "express": "^4.19.2",
+        "nde": "^0.0.2",
+        "node": "^22.21.0"
     },
     "devDependencies": {
-      "ts-node-dev": "^2.0.0",
-      "typescript": "^5.4.0"
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.4.0"
     }
-  }
+}
