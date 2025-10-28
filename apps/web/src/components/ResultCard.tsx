@@ -93,7 +93,14 @@ const ResultCard = ({
           color: fg,
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
           <div>
             <div style={{ fontWeight: 600 }}>
               <button
@@ -102,7 +109,12 @@ const ResultCard = ({
                   toggleFav(r.id);
                 }}
                 aria-label={isFav(r.id) ? "Unfavourite" : "Favourite"}
-                style={{ marginRight: 6, border: "none", background: "transparent", cursor: "pointer" }}
+                style={{
+                  marginRight: 6,
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                }}
               >
                 {isFav(r.id) ? "⭐" : "☆"}
               </button>
@@ -114,10 +126,9 @@ const ResultCard = ({
             </div>
           </div>
 
-          {/* status pill with the marginRight you requested */}
           <span
             style={{
-              marginRight: "20px", // keep this
+              marginRight: "20px",
               fontSize: 12,
               padding: "4px 8px",
               borderRadius: 999,
@@ -174,6 +185,7 @@ const ResultCard = ({
             </a>
           </div>
 
+          {/* ✅ Map section — this was rendering correctly */}
           <div
             style={{
               height: 180,
