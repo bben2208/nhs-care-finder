@@ -8,6 +8,8 @@ export async function apiGetWithFallback<T = any>(
   const qs = queryString ? `?${queryString}` : "";
   const primary = `${API_BASE}${path}${qs}`;
 
+  
+
   // 🟦 DEBUG LOGS
   console.log(
     "%c[API INIT]",
@@ -72,4 +74,6 @@ export async function apiGetWithFallback<T = any>(
       throw err2;
     }
   }
+
+  
 }

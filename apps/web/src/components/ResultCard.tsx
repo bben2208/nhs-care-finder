@@ -117,7 +117,7 @@ const ResultCard = ({
           {/* status pill with the marginRight you requested */}
           <span
             style={{
-              marginRight: "20px", // keep this
+              marginRight: "30px", // keep this
               fontSize: 12,
               padding: "4px 8px",
               borderRadius: 999,

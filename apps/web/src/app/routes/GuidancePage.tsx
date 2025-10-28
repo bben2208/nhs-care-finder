@@ -14,7 +14,7 @@ function Card({ title, body, goTo }: { title: string; body: string; goTo: string
 
 export default function GuidancePage() {
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: 16, fontFamily: "system-ui, sans-serif" }}>
+    <div style={{ maxWidth: 760, margin: "0 auto", padding: 16, fontFamily: "system-ui, sans-serif" }}>
       <header style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
         <Link to="/" style={{ textDecoration: "none" }}>← Back to search</Link>
       </header>
