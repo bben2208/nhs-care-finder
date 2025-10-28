@@ -23,6 +23,8 @@ export type Place = {
   waitMinutes?: number;
 };
 
+const MAX_RESULTS = 3;
+
 function normalizeResults(payload: any): Place[] {
   if (Array.isArray(payload)) return payload as Place[];
   if (payload && Array.isArray(payload.results)) return payload.results as Place[];
@@ -70,14 +72,15 @@ export function usePlacesSearch() {
           "Data:", data
         );
 
-        const list = normalizeResults(data);
+        const listAll = normalizeResults(data);
+        const list = listAll.slice(0, MAX_RESULTS); // ⬅️ cap to 3
         setResults(list);
         setExpandedId(list[0]?.id ?? null);
 
         console.log(
           "%c[usePlacesSearch] 📋 Normalized results:",
           "color: #7fff00; font-weight: bold",
-          list
+          { returned: listAll.length, showing: list.length, ids: list.map(x => x.id) }
         );
 
         const next: Record<string, string> = { postcode, radius: String(radiusKm) };
@@ -133,14 +136,15 @@ export function usePlacesSearch() {
           "Data:", data
         );
 
-        const list = normalizeResults(data);
+        const listAll = normalizeResults(data);
+        const list = listAll.slice(0, MAX_RESULTS); // ⬅️ cap to 3
         setResults(list);
         setExpandedId(list[0]?.id ?? null);
 
         console.log(
           "%c[usePlacesSearch] 📋 Normalized results:",
           "color: #7fff00; font-weight: bold",
-          list
+          { returned: listAll.length, showing: list.length, ids: list.map(x => x.id) }
         );
 
         const next: Record<string, string> = {

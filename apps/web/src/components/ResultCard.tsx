@@ -128,7 +128,7 @@ const ResultCard = ({
 
           <span
             style={{
-              marginRight: "20px",
+              marginRight: "30px",
               fontSize: 12,
               padding: "4px 8px",
               borderRadius: 999,

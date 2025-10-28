@@ -16,6 +16,7 @@ import SearchForm from "../components/SearchForm";
 import Tabs from "../components/Tabs";
 import BigMap from "../components/BigMap";
 import ResultList from "../components/ResultList";
+import GuidancePage from "./routes/GuidancePage";
 
 // Chatbot (feature)
 import Chatbot from "../features/chatbot/Chatbot";
