@@ -2,7 +2,36 @@ import express from "express";
 import cors from "cors";
 import placesRouter from "./routes/places";
 
+
 const app = express();
+
+const ALLOWED_ORIGINS = [
+  "https://nhs-care-finder-web.onrender.com", // frontend on Render
+  "http://localhost:5173",                     // local dev
+];
+
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      // allow non-browser tools (no origin) and the whitelisted ones
+      if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+      cb(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true, // if you ever send cookies/auth headers
+  })
+);
+
+// important: handle preflight for all routes
+app.options("*", cors());
+
+// ... your routes, e.g.
+app.get("/places", async (req, res) => {
+  // ...
+});
+
+
 
 const allowedOrigins = (process.env.WEB_ORIGIN ?? "")
   .split(",")
